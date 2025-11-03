@@ -8,6 +8,7 @@
 // Configuración inicial
  import { createAuthenticatedClient, isFinalizedGrant } from "@interledger/open-payments";
  import fs from "fs";
+import { finalization } from "process";
 
 // a. Importar dependencias y configurar el cliente
 const privateKey = fs.readFileSync('private.key', 'utf-8')
@@ -58,16 +59,56 @@ const client = await createAuthenticatedClient({
 
   console.log(incomingPaymentGrant);
 
-  // 3. Crear un pago entrante para el receptor
+// 3. Crear un pago entrante para el receptor
+ const incomingPayment = await client.incomingPayment.create(
+    {
+      url: receivingWalletAddress.resourceServer,
+      accessToken: incomingPaymentGrant.access_token.value,
+    },
+    {
+      walletAddress: receivingWalletAddress.id,
+      incomingAmount: {
+        assetCode: receivingWalletAddress.assetCode,
+        assetScale: receivingWalletAddress.assetScale,
+        value: "1000", //aqui son 10 dolares
+      },
+    }
+  );
 
-// 4. Crear un concesiÃ³n para una cotizaciÃ³n
+  console.log(incomingPayment);
 
-// 5. Obtener una cotizaciÃ³n para el remitente
 
-// 6. Obtener una concesiÃ³n para un pago saliente
+// 4. Crear un concesión para una cotización
 
-// 7. Continuar con la concesiÃ³n del pago saliente
+  const quoteGrant = await client.grant.request(
+    {
+      url: sendingWalletAddress.authServer,
+    },
+    {
+      access_token: {
+        access: [
+          {
+            type: "quote",
+            actions: ["create", "read"],
+          },
+        ],
+      },
+    }
+  );
+  if(!isFinalizedGrant(quoteGrant)){
+    throw new Error("Se espera finalice la concesion");
+  }
 
-// 8. Finalizar la concesiÃ³n del pago saliente
+    console.log(quoteGrant);
+  
 
-// 9. Continuar con la cotizaciÃ³n de pago sali
+
+// 5. Obtener una cotización para el remitente
+
+// 6. Obtener una concesión para un pago saliente
+
+// 7. Continuar con la concesión del pago saliente
+
+// 8. Finalizar la concesión del pago saliente
+
+// 9. Continuar con la cotización de pago saliente
